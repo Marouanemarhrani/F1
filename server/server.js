@@ -6,8 +6,8 @@ const connectDB = require('./config/db');
 const path = require('path');
 const bodyParser = require('body-parser');
 
-// Import routes
-
+// Import user routes
+const userRoutes = require('./routes/userRoutes');
 
 // Configure environment variables
 dotenv.config();
@@ -30,9 +30,8 @@ app.use(morgan('dev'));
 /* Serve static files from the React app
 app.use(express.static(path.join(__dirname, 'client/build')));*/
 
-
 // Route handling
-
+app.use('/api/users', userRoutes);
 
 /* Handle all other routes and return the React app
 app.use('*', (req, res) => {
@@ -47,7 +46,6 @@ if (process.env.NODE_ENV !== 'test') {
     app.listen(PORT, () => {
       console.log(`Server is running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
     });
-  }
-
+}
 
 module.exports = app;
