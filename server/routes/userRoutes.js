@@ -1,34 +1,56 @@
 const express = require('express');
-const {
-  registerUser,
-  loginUser,
-  getUserProfile,
-  updateUserProfile,
-  changePassword,
-  deleteUser
+const { 
+    registerController, 
+    loginController, 
+    updateProfileController, 
+    getAllOrdersController, 
+    orderStatusController, 
+    getOrdersController, 
+    updateAddressController, 
+    deleteUserController
 } = require('../controllers/userController');
-const { protect } = require('../middlewares/authMiddleware');
+const { isAdmin, isTechnician, requireSignIn } = require('../middlewares/authMiddleware');
 
 const router = express.Router();
 
-// Public routes
-// Route for user registration
-router.post('/register', registerUser);
+// Routing
+// Register a new user
+router.post('/register', registerController);
 
-// Route for user login
-router.post('/login', loginUser);
+// User login
+router.post('/login', loginController);
 
-// Protected routes (require authentication)
-// Route to get the logged-in user's profile
-router.get('/profile', protect, getUserProfile);
+// Update user profile
+router.put('/profile', requireSignIn, updateProfileController);
 
-// Route to update the user's profile
-router.put('/profile', protect, updateUserProfile);
+// Protected user route auth
+router.get("/user-auth", requireSignIn, (req, res) => {
+    res.status(200).send({ ok: true });
+});
 
-// Route to change the user's password
-router.put('/change-password', protect, changePassword);
+// Protected admin route auth
+router.get("/admin-auth", requireSignIn, isAdmin, (req, res) => {
+    res.status(200).send({ ok: true });
+});
 
-// Route to delete the user's account
-router.delete('/delete-account', protect, deleteUser);
+// Protected technician route auth
+router.get("/technician-auth", requireSignIn, isTechnician, (req, res) => {
+    res.status(200).send({ ok: true });
+});
+
+// Orders
+router.get('/orders', requireSignIn, getOrdersController);
+
+// All orders
+router.get('/all-orders', requireSignIn, isAdmin, getAllOrdersController);
+
+// Order status update
+router.put("/order-status/:orderId", requireSignIn, isAdmin, orderStatusController);
+
+// Update user address
+router.put('/update-address', requireSignIn, updateAddressController);
+
+//delete account
+router.delete('/delete-account', requireSignIn, deleteUserController);
 
 module.exports = router;

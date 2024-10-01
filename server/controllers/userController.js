@@ -1,154 +1,264 @@
-const User = require('../models/User');
-const jwt = require('jsonwebtoken');
-const { hashPassword, comparePassword } = require('../helpers/passwordHelper');
+const userModel = require('../models/userModel');
+const orderModel = require('../models/orderModel');
+const { comparePassword, hashPassword } = require('../helpers/authHelper');
+const JWT = require('jsonwebtoken');
 
-// Register User
-const registerUser = async (req, res) => {
-  try {
-    const { firstName, lastName, email, password, passwordConfirmation } = req.body;
+// Register a new user
+const registerController = async (req, res) => {
+    try {
+        const { firstname, lastname, email, password, phone, address } = req.body;
+        
+        const requiredFields = { firstname, lastname, email, password, phone, address };
+        for (const [field, value] of Object.entries(requiredFields)) {
+            if (!value) {
+                return res.status(400).send({ 
+                    success:false,
+                    message: `${field.charAt(0).toUpperCase() + field.slice(1)} is required for authentication!` });
+            }
+        }
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
+        const existingUser = await userModel.findOne({ email });
+        if (existingUser) {
+            return res.status(200).send({
+                success: false,
+                message: "An account is already registered with this email. Login or try another email",
+            });
+        }
+
+        const hashedPassword = await hashPassword(password);
+        const user = new userModel({
+            firstname,
+            lastname,
+            email,
+            phone,
+            address,
+            password: hashedPassword,
+        });
+        await user.save();
+
+        res.status(201).send({
+            success: true,
+            message: "Account added successfully",
+            user,
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send({
+            success: false,
+            message: "An unexpected error occurred. Please try again.",
+            error,
+        });
     }
-
-    // Create new user
-    const user = new User({
-      firstName,
-      lastName,
-      email,
-      password,
-      passwordConfirmation
-    });
-
-    await user.save();
-    res.status(201).json({ message: 'User registered successfully' });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
 };
 
-// Login User
-const loginUser = async (req, res) => {
-  try {
-    const { email, password } = req.body;
+// Login user
+const loginController = async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        
+        if (!email || !password) {
+            return res.status(400).send({
+                success: false,
+                message: 'Email and password are required',
+            });
+        }
 
-    // Trim the password and email to avoid hidden characters or spaces
-    const user = await User.findOne({ email: email.trim() });
-    if (!user) {
-      return res.status(400).json({ message: 'Invalid email or password' });
+        const user = await userModel.findOne({ email });
+        if (!user) {
+            return res.status(404).send({
+                success: false,
+                message: "User doesn't exist. Please register or try another email.",
+            });
+        }
+
+        const isMatch = await comparePassword(password, user.password);
+        if (!isMatch) {
+            return res.status(400).send({
+                success: false,
+                message: "Incorrect password. Please try again.",
+            });
+        }
+
+        const token = JWT.sign({ _id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+
+        res.status(200).send({
+            success: true,
+            message: "Login successful",
+            user: {
+                _id: user._id,
+                firstname: user.firstname,
+                lastname: user.lastname,
+                email: user.email,
+                phone: user.phone,
+                address: user.address,
+                role: user.role,
+            },
+            token,
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send({
+            success: false,
+            message: "An unexpected error occurred during login. Please try again.",
+            error,
+        });
     }
-
-    // Ensure the password is trimmed
-    const isMatch = await user.comparePassword(password.trim()); 
-    console.log('Trimmed Password for Comparison:', password.trim());  // Log trimmed password
-    if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid email or password' });
-    }
-
-    // Generate a JWT token or return user details as needed
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    res.json({ token, user: { id: user._id, firstName: user.firstName, lastName: user.lastName, email: user.email } });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
 };
 
+// Update profile
+const updateProfileController = async (req, res) => {
+    try {
+        const { firstname, lastname, email, password, address, phone } = req.body;
+        const user = await userModel.findById(req.user._id);
+        
+        if (password && password.length < 6) {
+            return res.json({ error: 'Password is required and must be at least 6 characters long' });
+        }
 
-// Get User Profile
-const getUserProfile = async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id).select('-password');
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+        const hashedPassword = password ? await hashPassword(password) : undefined;
+        const updatedUser = await userModel.findByIdAndUpdate(req.user._id, {
+            firstname: firstname || user.firstname,
+            lastname: lastname || user.lastname,
+            password: hashedPassword || user.password,
+            phone: phone || user.phone,
+            address: address || user.address,
+        }, { new: true });
+
+        res.status(200).send({
+            success: true,
+            message: 'Profile updated successfully',
+            updatedUser,
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(400).send({
+            success: false,
+            message: "There was an error in updating the profile",
+            error,
+        });
     }
-    res.json(user);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
 };
 
-// Update User Profile
-const updateUserProfile = async (req, res) => {
-  try {
-    const { firstName, lastName } = req.body;
+// Delete user account
+const deleteUserController = async (req, res) => {
+    try {
+        // Find the user by ID and delete
+        const user = await userModel.findByIdAndDelete(req.user._id);
 
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+        if (!user) {
+            return res.status(404).send({
+                success: false,
+                message: "User not found",
+            });
+        }
+
+        res.status(200).send({
+            success: true,
+            message: "Account deleted successfully",
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send({
+            success: false,
+            message: "An error occurred while deleting the account",
+            error,
+        });
     }
-
-    // Allow only the first name and last name to be updated
-    user.firstName = firstName || user.firstName;
-    user.lastName = lastName || user.lastName;
-
-    // Save the updated user details
-    await user.save();
-    res.json({ message: 'Profile updated successfully' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
 };
 
-
-// Change Password
-const changePassword = async (req, res) => {
-  try {
-    const { currentPassword, newPassword, passwordConfirmation } = req.body;
-
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+// Get user's orders
+const getOrdersController = async (req, res) => {
+    try {
+        const orders = await orderModel
+            .find({ buyer: req.user._id })
+            .populate("products", "-photo")
+            .populate("buyer", "name");
+        res.json(orders);
+    } catch (error) {
+        console.log(error);
+        res.status(500).send({
+            success: false,
+            message: "Error in getting orders",
+            error,
+        });
     }
-
-    const isMatch = await user.comparePassword(currentPassword);
-    if (!isMatch) {
-      return res.status(400).json({ message: 'Current password is incorrect' });
-    }
-
-    if (newPassword !== passwordConfirmation) {
-      return res.status(400).json({ message: 'New passwords do not match' });
-    }
-
-    // Hash the new password
-    user.password = await hashPassword(newPassword);
-    console.log('New Hashed Password:', user.password);
-
-    // Save the user with the new password
-    await user.save();
-
-    // Log the user after saving to verify if the new password is saved
-    const updatedUser = await User.findById(req.user.id);
-    console.log('User after saving:', updatedUser);
-
-    res.json({ message: 'Password changed successfully' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
 };
 
-// Delete User
-const deleteUser = async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+// Get all orders
+const getAllOrdersController = async (req, res) => {
+    try {
+        const orders = await orderModel
+            .find({})
+            .populate("products", "-photo")
+            .populate("buyer", "name")
+            .sort({ createdAt: -1 });
+        res.json(orders);
+    } catch (error) {
+        console.log(error);
+        res.status(500).send({
+            success: false,
+            message: "Error in getting all orders",
+            error,
+        });
     }
+};
 
-    // Delete user account
-    await user.remove();
-    res.json({ message: 'User account deleted successfully' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+// Update order status
+const orderStatusController = async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const { status } = req.body;
+        const orders = await orderModel.findByIdAndUpdate(
+            orderId,
+            { status },
+            { new: true }
+        );
+        res.status(200).send({
+            success: true,
+            message: 'Order status updated successfully',
+            orders,
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).send({
+            success: false,
+            message: "There was an error while updating the order",
+            error,
+        });
+    }
+};
+
+// Update user's address
+const updateAddressController = async (req, res) => {
+    try {
+        const { address } = req.body;
+        const updatedAddress = await userModel.findByIdAndUpdate(req.user._id, {
+            address: address || req.user.address,
+        }, { new: true });
+
+        res.status(200).send({
+            success: true,
+            message: 'Address updated successfully',
+            updatedAddress,
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(400).send({
+            success: false,
+            message: "There was an error in updating the address",
+            error,
+        });
+    }
 };
 
 module.exports = {
-  registerUser,
-  loginUser,
-  getUserProfile,
-  updateUserProfile,
-  changePassword,
-  deleteUser
+    registerController,
+    loginController,
+    updateProfileController,
+    getOrdersController,
+    getAllOrdersController,
+    orderStatusController,
+    updateAddressController,
+    deleteUserController,
+    
 };

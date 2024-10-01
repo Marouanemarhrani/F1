@@ -1,30 +1,66 @@
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const JWT = require('jsonwebtoken');
+const userModel = require('../models/userModel');
 
-// Middleware to protect routes
-const protect = async (req, res, next) => {
-  let token;
-
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+// Protected Routes token base
+const requireSignIn = async (req, res, next) => {
     try {
-      // Get token from header
-      token = req.headers.authorization.split(' ')[1];
-
-      // Verify token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-      // Get user from token
-      req.user = await User.findById(decoded.id).select('-password');
-
-      next();
+        const decode = JWT.verify(
+            req.headers.authorization, 
+            process.env.JWT_SECRET
+        );
+        req.user = decode;   
+        next();
     } catch (error) {
-      res.status(401).json({ message: 'Not authorized, token failed' });
+        console.log(error);
     }
-  }
-
-  if (!token) {
-    res.status(401).json({ message: 'Not authorized, no token' });
-  }
 };
 
-module.exports = { protect };
+// Admin access
+const isAdmin = async (req, res, next) => {
+    try {
+        const user = await userModel.findById(req.user._id);
+        if (user.role !== 1) {
+            return res.status(401).send({
+                success: false,
+                message: "You can't access to this page!",
+            });
+        } else {
+            next();
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(401).send({
+            success: false,
+            error,
+            message: "Error in admin middleware",
+        });
+    }
+};
+
+// Technician access
+const isTechnician = async (req, res, next) => {
+    try {
+        const user = await userModel.findById(req.user._id);
+        if (user.role !== 2) {
+            return res.status(401).send({
+                success: false,
+                message: "You can't access to this page!",
+            });
+        } else {
+            next();
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(401).send({
+            success: false,
+            error,
+            message: "Error in technician middleware",
+        });
+    }
+};
+
+module.exports = {
+    requireSignIn,
+    isAdmin,
+    isTechnician
+};
