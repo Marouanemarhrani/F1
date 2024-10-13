@@ -1,0 +1,46 @@
+version: '3'
+
+services:
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - mongo
+
+  client:
+    build: ./client
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+
+  mongo:
+    image: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  mongo-express:
+    image: mongo-express
+    container_name: mongo-express
+    environment:
+      - ME_CONFIG_BASICAUTH_USERNAME=storedb
+      - ME_CONFIG_BASICAUTH_PASSWORD=123
+      - ME_CONFIG_MONGODB_URL=mongodb+srv://storedb:123@cluster0.yuzsf2m.mongodb.net/
+      - ME_CONFIG_MONGODB_SERVER=mongo
+    ports:
+      - "8081:8081"
+    depends_on:
+      - mongo
+
+volumes:
+  mongo-data:
