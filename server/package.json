@@ -1,10 +1,12 @@
 {
-  "name": "F1",
+  "name": "f1-comptetition",
   "version": "1.0.0",
-  "description": "",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
+    "test:server": "NODE_ENV=test jest --config ./jest.config.js",
+    "lint": "eslint .",
+    "start": "node server.js",
     "server": "nodemon server.js",
     "client": "npm start --prefix ../client",
     "dev": "concurrently \"npm run start\" \"npm run client\""
@@ -12,21 +14,32 @@
   "keywords": [],
   "author": "Marouane Marhrani",
   "license": "ISC",
+  "description": "",
   "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^6.6.0",
+    "@fortawesome/free-solid-svg-icons": "^6.6.0",
+    "@fortawesome/react-fontawesome": "^0.2.2",
     "bcrypt": "^5.1.1",
-    "concurrently": "^9.0.1",
+    "braintree": "^3.24.0",
+    "concurrently": "^8.2.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
-    "express": "^4.21.0",
+    "express": "^4.19.2",
     "express-async-handler": "^1.2.0",
     "express-formidable": "^1.2.0",
     "fs": "^0.0.1-security",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.6.3",
+    "moment": "^2.30.1",
+    "mongoose": "^8.5.1",
     "morgan": "^1.10.0",
+    "nodemon": "^3.1.4",
+    "react-modal": "^3.16.1",
+    "react-responsive-carousel": "^3.2.23",
     "slugify": "^1.6.6"
   },
   "devDependencies": {
-    "nodemon": "^3.1.7"
+    "jest": "^29.7.0",
+    "mongodb-memory-server": "^10.0.0",
+    "supertest": "^7.0.0"
   }
 }

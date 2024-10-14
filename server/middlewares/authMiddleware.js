@@ -1,9 +1,13 @@
 const JWT = require('jsonwebtoken');
 const userModel = require('../models/userModel');
 
-// Protected Routes token base
+// Protected Routes token based
 const requireSignIn = async (req, res, next) => {
     try {
+        if (!req.headers.authorization) {
+            return res.status(401).json({ message: 'Authorization header missing!' });
+        }
+
         const decode = JWT.verify(
             req.headers.authorization, 
             process.env.JWT_SECRET
@@ -12,6 +16,7 @@ const requireSignIn = async (req, res, next) => {
         next();
     } catch (error) {
         console.log(error);
+        res.status(401).json({ message: 'Invalid or expired token' });
     }
 };
 
@@ -37,8 +42,8 @@ const isAdmin = async (req, res, next) => {
     }
 };
 
-// Technician access
-const isTechnician = async (req, res, next) => {
+// Employee access
+const isEmployee = async (req, res, next) => {
     try {
         const user = await userModel.findById(req.user._id);
         if (user.role !== 2) {
@@ -54,7 +59,7 @@ const isTechnician = async (req, res, next) => {
         res.status(401).send({
             success: false,
             error,
-            message: "Error in technician middleware",
+            message: "Error in employee middleware",
         });
     }
 };
@@ -62,5 +67,5 @@ const isTechnician = async (req, res, next) => {
 module.exports = {
     requireSignIn,
     isAdmin,
-    isTechnician
+    isEmployee
 };

@@ -1,51 +1,67 @@
 const userModel = require('../models/userModel');
-const orderModel = require('../models/orderModel');
 const { comparePassword, hashPassword } = require('../helpers/authHelper');
 const JWT = require('jsonwebtoken');
 
 // Register a new user
 const registerController = async (req, res) => {
     try {
-        const { firstname, lastname, email, password, phone, address } = req.body;
-        
-        const requiredFields = { firstname, lastname, email, password, phone, address };
+        const { firstName, lastName, email, password, confirmPassword, phone, street, postalCode, city, country } = req.body;
+
+        // Check if required fields are provided
+        const requiredFields = { firstName, lastName, email, password, confirmPassword, phone, street, postalCode, city, country };
         for (const [field, value] of Object.entries(requiredFields)) {
             if (!value) {
                 return res.status(400).send({ 
-                    success:false,
-                    message: `${field.charAt(0).toUpperCase() + field.slice(1)} is required for authentication!` });
+                    success: false,
+                    message: `${field.charAt(0).toUpperCase() + field.slice(1)} is required for registration!`
+                });
             }
         }
 
+        // Check if password and confirmPassword match
+        if (password !== confirmPassword) {
+            return res.status(400).send({
+                success: false,
+                message: "Password and Confirm Password do not match",
+            });
+        }
+
+        // Check if user already exists
         const existingUser = await userModel.findOne({ email });
         if (existingUser) {
             return res.status(200).send({
                 success: false,
-                message: "An account is already registered with this email. Login or try another email",
+                message: "An account is already registered with this email. Please try another email or login.",
             });
         }
 
+        // Hash password and create user
         const hashedPassword = await hashPassword(password);
         const user = new userModel({
-            firstname,
-            lastname,
+            firstName,
+            lastName,
             email,
             phone,
-            address,
+            address: {
+                street,
+                postalCode,
+                city,
+                country
+            },
             password: hashedPassword,
         });
         await user.save();
 
         res.status(201).send({
             success: true,
-            message: "Account added successfully",
+            message: "Account created successfully",
             user,
         });
     } catch (error) {
         console.error(error);
         res.status(500).send({
             success: false,
-            message: "An unexpected error occurred. Please try again.",
+            message: "An unexpected error occurred during registration. Please try again.",
             error,
         });
     }
@@ -67,7 +83,7 @@ const loginController = async (req, res) => {
         if (!user) {
             return res.status(404).send({
                 success: false,
-                message: "User doesn't exist. Please register or try another email.",
+                message: "User not found. Please register first.",
             });
         }
 
@@ -86,8 +102,8 @@ const loginController = async (req, res) => {
             message: "Login successful",
             user: {
                 _id: user._id,
-                firstname: user.firstname,
-                lastname: user.lastname,
+                firstName: user.firstName,
+                lastName: user.lastName,
                 email: user.email,
                 phone: user.phone,
                 address: user.address,
@@ -105,23 +121,23 @@ const loginController = async (req, res) => {
     }
 };
 
-// Update profile
+// Update profile (without password update)
 const updateProfileController = async (req, res) => {
     try {
-        const { firstname, lastname, email, password, address, phone } = req.body;
+        const { firstName, lastName, email, phone, street, postalCode, city, country } = req.body;
         const user = await userModel.findById(req.user._id);
-        
-        if (password && password.length < 6) {
-            return res.json({ error: 'Password is required and must be at least 6 characters long' });
-        }
 
-        const hashedPassword = password ? await hashPassword(password) : undefined;
         const updatedUser = await userModel.findByIdAndUpdate(req.user._id, {
-            firstname: firstname || user.firstname,
-            lastname: lastname || user.lastname,
-            password: hashedPassword || user.password,
+            firstName: firstName || user.firstName,
+            lastName: lastName || user.lastName,
+            email: email || user.email,
             phone: phone || user.phone,
-            address: address || user.address,
+            address: {
+                street: street || user.address.street,
+                postalCode: postalCode || user.address.postalCode,
+                city: city || user.address.city,
+                country: country || user.address.country
+            }
         }, { new: true });
 
         res.status(200).send({
@@ -133,7 +149,58 @@ const updateProfileController = async (req, res) => {
         console.log(error);
         res.status(400).send({
             success: false,
-            message: "There was an error in updating the profile",
+            message: "There was an error updating the profile",
+            error,
+        });
+    }
+};
+
+// Update password
+const updatePasswordController = async (req, res) => {
+    try {
+        const { oldPassword, newPassword, confirmNewPassword } = req.body;
+
+        // Check if all fields are provided
+        if (!oldPassword || !newPassword || !confirmNewPassword) {
+            return res.status(400).send({
+                success: false,
+                message: "All fields are required to update the password",
+            });
+        }
+
+        // Check if new passwords match
+        if (newPassword !== confirmNewPassword) {
+            return res.status(400).send({
+                success: false,
+                message: "New Password and Confirm New Password do not match",
+            });
+        }
+
+        const user = await userModel.findById(req.user._id);
+
+        // Check if old password matches
+        const isMatch = await comparePassword(oldPassword, user.password);
+        if (!isMatch) {
+            return res.status(400).send({
+                success: false,
+                message: "Old password is incorrect",
+            });
+        }
+
+        // Update with the new password
+        const hashedNewPassword = await hashPassword(newPassword);
+        user.password = hashedNewPassword;
+        await user.save();
+
+        res.status(200).send({
+            success: true,
+            message: "Password updated successfully",
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).send({
+            success: false,
+            message: "An error occurred while updating the password",
             error,
         });
     }
@@ -142,7 +209,6 @@ const updateProfileController = async (req, res) => {
 // Delete user account
 const deleteUserController = async (req, res) => {
     try {
-        // Find the user by ID and delete
         const user = await userModel.findByIdAndDelete(req.user._id);
 
         if (!user) {
@@ -166,99 +232,10 @@ const deleteUserController = async (req, res) => {
     }
 };
 
-// Get user's orders
-const getOrdersController = async (req, res) => {
-    try {
-        const orders = await orderModel
-            .find({ buyer: req.user._id })
-            .populate("products", "-photo")
-            .populate("buyer", "name");
-        res.json(orders);
-    } catch (error) {
-        console.log(error);
-        res.status(500).send({
-            success: false,
-            message: "Error in getting orders",
-            error,
-        });
-    }
-};
-
-// Get all orders
-const getAllOrdersController = async (req, res) => {
-    try {
-        const orders = await orderModel
-            .find({})
-            .populate("products", "-photo")
-            .populate("buyer", "name")
-            .sort({ createdAt: -1 });
-        res.json(orders);
-    } catch (error) {
-        console.log(error);
-        res.status(500).send({
-            success: false,
-            message: "Error in getting all orders",
-            error,
-        });
-    }
-};
-
-// Update order status
-const orderStatusController = async (req, res) => {
-    try {
-        const { orderId } = req.params;
-        const { status } = req.body;
-        const orders = await orderModel.findByIdAndUpdate(
-            orderId,
-            { status },
-            { new: true }
-        );
-        res.status(200).send({
-            success: true,
-            message: 'Order status updated successfully',
-            orders,
-        });
-    } catch (error) {
-        console.log(error);
-        res.status(500).send({
-            success: false,
-            message: "There was an error while updating the order",
-            error,
-        });
-    }
-};
-
-// Update user's address
-const updateAddressController = async (req, res) => {
-    try {
-        const { address } = req.body;
-        const updatedAddress = await userModel.findByIdAndUpdate(req.user._id, {
-            address: address || req.user.address,
-        }, { new: true });
-
-        res.status(200).send({
-            success: true,
-            message: 'Address updated successfully',
-            updatedAddress,
-        });
-    } catch (error) {
-        console.log(error);
-        res.status(400).send({
-            success: false,
-            message: "There was an error in updating the address",
-            error,
-        });
-    }
-};
-
 module.exports = {
     registerController,
     loginController,
     updateProfileController,
-    getOrdersController,
-    getAllOrdersController,
-    orderStatusController,
-    updateAddressController,
+    updatePasswordController, 
     deleteUserController,
-    
 };

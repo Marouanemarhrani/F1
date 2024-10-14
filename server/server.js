@@ -27,17 +27,8 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
 
-/* Serve static files from the React app
-app.use(express.static(path.join(__dirname, 'client/build')));*/
-
 // Route handling
 app.use('/api/users', userRoutes);
-
-/* Handle all other routes and return the React app
-app.use('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'client/build/index.html'));
-})*/
-
 // Define port
 const PORT = process.env.PORT || 8080;
 

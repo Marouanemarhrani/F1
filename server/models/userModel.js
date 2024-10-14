@@ -1,53 +1,78 @@
 const mongoose = require('mongoose');
+const { Schema } = mongoose;
 
-const userSchema = new mongoose.Schema({
-    firstname: {
-        type: String,
-        required: true,
-        trim: true,
+// User schema
+const userSchema = new Schema({
+  firstName: {
+    type: String,
+    required: true,
+    trim: true,
+    minlength: 2,
+  },
+  lastName: {
+    type: String,
+    required: true,
+    trim: true,
+    minlength: 2,
+  },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+    lowercase: true,
+  },
+  password: {
+    type: String,
+    required: true,
+    minlength: 6,
+  },
+  confirmPassword: {
+    type: String,
+    required: true,
+    minlength: 6,
+    validate: {
+      validator: function (value) {
+        return value === this.password;
+      },
+      message: 'Passwords do not match',
     },
-    lastname: {
-        type: String,
-        required: true,
-        trim: true,
+  },
+  phone: {
+    type: String,
+    trim: true,
+  },
+  address: {
+    street: {
+      type: String,
+      trim: true,
     },
-    email: {
-        type: String,
-        required: true,
-        unique: true,
-        trim: true,
-        match: [/^\S+@\S+\.\S+$/, 'Please use a valid email address'],
+    postalCode: {
+      type: String,
+      trim: true,
     },
-    password: {
-        type: String,
-        required: true,
+    city: {
+      type: String,
+      trim: true,
     },
-    phone: {
-        type: String,
-        required: true,
-        trim: true,
-        match: [/^\+?[1-9]\d{1,14}$/, 'Please use a valid phone number'],
+    country: {
+      type: String,
+      trim: true,
     },
-    address: {
-        type: String,
-        required: true,
-    },
-    skills: {
-        type: [String], 
-    },
-    availability: {
-        type: Map,
-        of: Boolean,
-        default: {} // A map to track availability (e.g., { Monday: true, Tuesday: false, ... })
-    },
-    isActive: {
-        type: Boolean,
-        default: true, // Indicates if the technician is currently active
-    },
-    role: {
-        type: Number,
-        default: 0,
-    }
-}, { timestamps: true });
+  },
+  role: {
+    type: Number,
+    default: 0, 
+  },
+}, 
+{
+  timestamps: true, 
+});
 
-module.exports = mongoose.model('User', userSchema);
+userSchema.pre('save', function (next) {
+  this.confirmPassword = undefined;
+  next();
+});
+const userModel = mongoose.model('User', userSchema);
+
+module.exports = userModel;

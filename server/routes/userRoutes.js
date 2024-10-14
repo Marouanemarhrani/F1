@@ -3,13 +3,10 @@ const {
     registerController, 
     loginController, 
     updateProfileController, 
-    getAllOrdersController, 
-    orderStatusController, 
-    getOrdersController, 
-    updateAddressController, 
+    updatePasswordController,  
     deleteUserController
 } = require('../controllers/userController');
-const { isAdmin, isTechnician, requireSignIn } = require('../middlewares/authMiddleware');
+const { isAdmin, isEmployee, requireSignIn } = require('../middlewares/authMiddleware');  // isEmployee instead of isTechnician
 
 const router = express.Router();
 
@@ -20,8 +17,11 @@ router.post('/register', registerController);
 // User login
 router.post('/login', loginController);
 
-// Update user profile
+// Update user profile (without password)
 router.put('/profile', requireSignIn, updateProfileController);
+
+// Update password
+router.put('/update-password', requireSignIn, updatePasswordController); 
 
 // Protected user route auth
 router.get("/user-auth", requireSignIn, (req, res) => {
@@ -33,24 +33,12 @@ router.get("/admin-auth", requireSignIn, isAdmin, (req, res) => {
     res.status(200).send({ ok: true });
 });
 
-// Protected technician route auth
-router.get("/technician-auth", requireSignIn, isTechnician, (req, res) => {
+// Protected employee route auth
+router.get("/employee-auth", requireSignIn, isEmployee, (req, res) => {
     res.status(200).send({ ok: true });
 });
 
-// Orders
-router.get('/orders', requireSignIn, getOrdersController);
-
-// All orders
-router.get('/all-orders', requireSignIn, isAdmin, getAllOrdersController);
-
-// Order status update
-router.put("/order-status/:orderId", requireSignIn, isAdmin, orderStatusController);
-
-// Update user address
-router.put('/update-address', requireSignIn, updateAddressController);
-
-//delete account
+// Delete account
 router.delete('/delete-account', requireSignIn, deleteUserController);
 
 module.exports = router;
