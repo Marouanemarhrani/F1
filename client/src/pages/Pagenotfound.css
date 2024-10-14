@@ -1,0 +1,91 @@
+.pagenotfound-container {
+    background-color: #f8f9fa;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 20px;
+  }
+  
+  .pagenotfound-title {
+    font-size: 6rem;
+    color: #333;
+    margin-bottom: 20px;
+    font-family: 'Poppins', sans-serif;
+  }
+  
+  .pagenotfound-subtitle {
+    font-size: 2rem;
+    color: #666;
+    margin-bottom: 20px;
+    font-family: 'Poppins', sans-serif;
+  }
+  
+  .pagenotfound-text {
+    font-size: 1.2rem;
+    color: #555;
+    margin-bottom: 30px;
+    max-width: 600px;
+  }
+  
+  .pagenotfound-home-button {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    text-decoration: none;
+    font-size: 1rem;
+    transition: background-color 0.3s ease;
+  }
+  
+  .pagenotfound-home-button:hover {
+    background-color: #0056b3;
+  }
+  
+  /* Responsive Design */
+  
+  /* For tablets and smaller screens */
+  @media (max-width: 768px) {
+    .pagenotfound-title {
+      font-size: 4rem;
+    }
+  
+    .pagenotfound-subtitle {
+      font-size: 1.5rem;
+    }
+  
+    .pagenotfound-text {
+      font-size: 1rem;
+      margin-bottom: 20px;
+    }
+  
+    .pagenotfound-home-button {
+      padding: 8px 16px;
+      font-size: 0.9rem;
+    }
+  }
+  
+  /* For mobile devices and smaller screens */
+  @media (max-width: 576px) {
+    .pagenotfound-title {
+      font-size: 3rem;
+    }
+  
+    .pagenotfound-subtitle {
+      font-size: 1.2rem;
+    }
+  
+    .pagenotfound-text {
+      font-size: 0.9rem;
+      margin-bottom: 15px;
+    }
+  
+    .pagenotfound-home-button {
+      padding: 7px 14px;
+      font-size: 0.85rem;
+    }
+  }
+  

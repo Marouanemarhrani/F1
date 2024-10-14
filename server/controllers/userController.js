@@ -7,7 +7,7 @@ const registerController = async (req, res) => {
     try {
         const { firstName, lastName, email, password, confirmPassword, phone, street, postalCode, city, country } = req.body;
 
-        // Check if required fields are provided
+        // Validate required fields
         const requiredFields = { firstName, lastName, email, password, confirmPassword, phone, street, postalCode, city, country };
         for (const [field, value] of Object.entries(requiredFields)) {
             if (!value) {
@@ -26,10 +26,10 @@ const registerController = async (req, res) => {
             });
         }
 
-        // Check if user already exists
+        // Check if the email already exists
         const existingUser = await userModel.findOne({ email });
         if (existingUser) {
-            return res.status(200).send({
+            return res.status(400).send({
                 success: false,
                 message: "An account is already registered with this email. Please try another email or login.",
             });
@@ -50,6 +50,8 @@ const registerController = async (req, res) => {
             },
             password: hashedPassword,
         });
+
+        // Save user
         await user.save();
 
         res.status(201).send({
@@ -58,11 +60,20 @@ const registerController = async (req, res) => {
             user,
         });
     } catch (error) {
-        console.error(error);
+        // Handle Mongoose validation errors
+        if (error.name === 'ValidationError') {
+            const messages = Object.values(error.errors).map(err => err.message);
+            return res.status(400).send({
+                success: false,
+                message: `Validation failed: ${messages.join(', ')}`,
+            });
+        }
+
+        // Generic error response
         res.status(500).send({
             success: false,
             message: "An unexpected error occurred during registration. Please try again.",
-            error,
+            error: error.message || error,
         });
     }
 };
@@ -112,7 +123,6 @@ const loginController = async (req, res) => {
             token,
         });
     } catch (error) {
-        console.error(error);
         res.status(500).send({
             success: false,
             message: "An unexpected error occurred during login. Please try again.",
@@ -146,7 +156,6 @@ const updateProfileController = async (req, res) => {
             updatedUser,
         });
     } catch (error) {
-        console.log(error);
         res.status(400).send({
             success: false,
             message: "There was an error updating the profile",
@@ -197,7 +206,6 @@ const updatePasswordController = async (req, res) => {
             message: "Password updated successfully",
         });
     } catch (error) {
-        console.log(error);
         res.status(500).send({
             success: false,
             message: "An error occurred while updating the password",
@@ -223,7 +231,6 @@ const deleteUserController = async (req, res) => {
             message: "Account deleted successfully",
         });
     } catch (error) {
-        console.error(error);
         res.status(500).send({
             success: false,
             message: "An error occurred while deleting the account",

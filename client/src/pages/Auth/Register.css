@@ -1,0 +1,139 @@
+.regbody {
+    background-color: #f8f9fa;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  
+  .register {
+    background: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 500px;
+  }
+  
+  .reg-title {
+    font-size: 2rem;
+    text-align: center;
+    margin-bottom: 20px;
+    font-family: 'Poppins', sans-serif;
+  }
+  
+  .reginput {
+    border-radius: 5px;
+    padding: 10px;
+  }
+  
+  .password-wrapper {
+    position: relative;
+  }
+  
+  .password-toggle-icon {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    cursor: pointer;
+  }
+  
+  .regbtn {
+    width: 100%;
+    padding: 10px;
+    background-color: #007bff;
+    border: none;
+    color: white;
+    border-radius: 5px;
+    font-size: 1rem;
+  }
+  
+  .regbtn:hover {
+    background-color: #0056b3;
+  }
+  
+  .logindiv {
+    text-align: center;
+    margin-top: 20px;
+  }
+  
+  .login-link {
+    color: #007bff;
+    text-decoration: none;
+  }
+  
+  .login-link:hover {
+    text-decoration: underline;
+  }
+  
+  /* Responsive Design */
+  
+  /* For tablets and small desktops (screens smaller than 1024px) */
+  @media (max-width: 1024px) {
+    .register {
+      padding: 25px;
+      max-width: 450px;
+    }
+  
+    .reg-title {
+      font-size: 1.8rem;
+    }
+  
+    .reginput {
+      padding: 8px;
+    }
+  
+    .regbtn {
+      padding: 8px;
+      font-size: 0.9rem;
+    }
+  }
+  
+  /* For mobile devices (screens smaller than 768px) */
+  @media (max-width: 768px) {
+    .register {
+      padding: 20px;
+      max-width: 400px;
+    }
+  
+    .reg-title {
+      font-size: 1.6rem;
+    }
+  
+    .reginput {
+      padding: 7px;
+    }
+  
+    .regbtn {
+      padding: 7px;
+      font-size: 0.85rem;
+    }
+  }
+  
+  /* For small mobile devices (screens smaller than 576px) */
+  @media (max-width: 576px) {
+    .regbody {
+      padding: 15px;
+    }
+  
+    .register {
+      padding: 15px;
+      max-width: 300px;
+    }
+  
+    .reg-title {
+      font-size: 1.4rem;
+    }
+  
+    .reginput {
+      padding: 6px;
+    }
+  
+    .regbtn {
+      padding: 6px;
+      font-size: 0.8rem;
+    }
+  }
+  

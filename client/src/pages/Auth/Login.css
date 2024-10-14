@@ -1,0 +1,132 @@
+/* Base styles */
+.login-body {
+    background-color: #f2f2f2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+.login-container {
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 40px;
+    max-width: 400px;
+    width: 100%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.login-heading {
+    font-size: 2rem;
+    margin-bottom: 30px;
+    font-family: 'Poppins', sans-serif;
+    text-align: center;
+}
+
+.login-label {
+    font-size: 0.875rem;
+    color: #333;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.login-input {
+    width: 100%;
+    padding: 12px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+    margin-bottom: 12px;
+}
+
+.login-password-wrapper {
+    position: relative;
+}
+
+.login-password-toggle-icon {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #888;
+}
+
+.login-submit-btn {
+    background-color: #d71921;
+    border: none;
+    color: white;
+    padding: 12px;
+    width: 100%;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.login-submit-btn:hover {
+    background-color: #b5171a;
+}
+
+.login-forgot-password-container {
+    text-align: right;
+    margin-top: 15px;
+}
+
+.login-forgot-password-link {
+    color: #d71921;
+    text-decoration: none;
+    font-size: 0.875rem;
+}
+
+.login-forgot-password-link:hover {
+    text-decoration: underline;
+}
+
+.login-register-container {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.login-register-link {
+    color: #d71921;
+    text-decoration: none;
+}
+
+.login-register-link:hover {
+    text-decoration: underline;
+}
+
+/* Responsive design */
+
+@media (max-width: 768px) {
+    .login-container {
+        padding: 30px;
+    }
+
+    .login-heading {
+        font-size: 1.75rem;
+    }
+
+    .login-input {
+        padding: 10px;
+    }
+}
+
+@media (max-width: 576px) {
+    .login-container {
+        padding: 20px;
+    }
+
+    .login-heading {
+        font-size: 1.5rem;
+    }
+
+    .login-input {
+        padding: 8px;
+    }
+
+    .login-submit-btn {
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+}
